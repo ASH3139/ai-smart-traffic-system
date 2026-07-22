@@ -7,3 +7,4 @@ pydantic-settings
 SQLAlchemy
 psycopg2-binary
 alembic
+opencv-python
