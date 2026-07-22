@@ -1,13 +1,40 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    # Application
+    APP_NAME: str
+    APP_ENV: str
+    DEBUG: bool
 
-    PROJECT_NAME: str = "AI Smart Traffic System"
+    # Security
+    SECRET_KEY: str
 
-    VERSION: str = "1.0.0"
+    # API
+    API_HOST: str
+    API_PORT: int
 
-    DEBUG: bool = True
+    # Database
+    DATABASE_URL: str
+
+    # Logging
+    LOG_LEVEL: str
+
+    # AI Models
+    MODEL_PATH: str
+
+    # CORS
+    ALLOWED_ORIGINS: str
+
+    # Project
+    PROJECT_NAME: str
+    VERSION: str
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",   # Ignore any unexpected variables
+    )
 
 
 settings = Settings()

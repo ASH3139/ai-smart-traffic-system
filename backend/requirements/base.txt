@@ -4,3 +4,6 @@ pydantic
 python-dotenv
 PyYAML
 pydantic-settings
+SQLAlchemy
+psycopg2-binary
+alembic
