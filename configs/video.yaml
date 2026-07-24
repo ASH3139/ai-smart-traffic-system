@@ -1,0 +1,13 @@
+video:
+  source: "datasets/videos/raw/traffic_sample2.mp4"
+
+  width: 1280
+  height: 720
+
+  target_fps: 30
+
+  loop_video: false
+
+  buffer_size: 5
+
+  display: true

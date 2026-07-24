@@ -1,14 +1,21 @@
-from dataclasses import dataclass
-from typing import Union
+from pathlib import Path
+import yaml
 
 
-@dataclass
+CONFIG_FILE = Path("configs/video.yaml")
+
+
 class VideoConfig:
-    """
-    Configuration for video sources.
-    """
 
-    source: Union[int, str] = 0
-    width: int = 1280
-    height: int = 720
-    fps: int = 30
+    def __init__(self):
+
+        with open(CONFIG_FILE, "r", encoding="utf-8") as file:
+            config = yaml.safe_load(file)["video"]
+
+        self.source = config["source"]
+        self.width = config["width"]
+        self.height = config["height"]
+        self.target_fps = config["target_fps"]
+        self.loop_video = config["loop_video"]
+        self.buffer_size = config["buffer_size"]
+        self.display = config["display"]

@@ -1,50 +1,56 @@
 import cv2
+from datetime import datetime
 
 from .config import VideoConfig
 from .exceptions import VideoSourceError, FrameReadError
+from .models import VideoFrame
 
 
 class FrameReader:
-    """
-    Reads frames from a video source.
-    """
 
-    def __init__(self, config: VideoConfig):
-        self.config = config
+    def __init__(self):
+
+        self.config = VideoConfig()
         self.capture = None
+        self.frame_id = 0
 
     def open(self):
-        """
-        Open the video source.
-        """
+
         self.capture = cv2.VideoCapture(self.config.source)
 
         if not self.capture.isOpened():
             raise VideoSourceError(
-                f"Unable to open video source: {self.config.source}"
+                f"Cannot open video source: {self.config.source}"
             )
 
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.width)
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.height)
-        self.capture.set(cv2.CAP_PROP_FPS, self.config.fps)
 
     def read(self):
-        """
-        Read a single frame.
-        """
+
         if self.capture is None:
             raise VideoSourceError("Video source is not opened.")
 
         success, frame = self.capture.read()
 
         if not success:
-            raise FrameReadError("Unable to read frame.")
 
-        return frame
+            if self.config.loop_video:
+                self.capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                success, frame = self.capture.read()
+
+            if not success:
+                raise FrameReadError("End of video or unable to read frame.")
+
+        self.frame_id += 1
+
+        return VideoFrame(
+            frame_id=self.frame_id,
+            timestamp=datetime.now(),
+            image=frame
+        )
 
     def release(self):
-        """
-        Release the video source.
-        """
+
         if self.capture is not None:
             self.capture.release()
