@@ -1,56 +1,112 @@
 import cv2
-from datetime import datetime
+import time
 
 from .config import VideoConfig
-from .exceptions import VideoSourceError, FrameReadError
-from .models import VideoFrame
+from .exceptions import VideoOpenError, FrameReadError
+from .models import Frame, VideoInfo
 
 
 class FrameReader:
+    """
+    Reads frames from a video source.
+
+    Supports:
+    - MP4 videos
+    - USB cameras
+    - RTSP streams
+    """
 
     def __init__(self):
 
         self.config = VideoConfig()
+
         self.capture = None
+
         self.frame_id = 0
+
+        self.video_info = None
+
+    @property
+    def fps(self):
+        if self.video_info:
+            return self.video_info.fps
+        return self.config.target_fps
 
     def open(self):
 
-        self.capture = cv2.VideoCapture(self.config.source)
+        self.capture = cv2.VideoCapture(
+            self.config.source
+        )
 
         if not self.capture.isOpened():
-            raise VideoSourceError(
-                f"Cannot open video source: {self.config.source}"
+            raise VideoOpenError(
+                f"Unable to open video source: {self.config.source}"
             )
 
-        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.width)
-        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.height)
+        width = int(
+            self.capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+        )
+
+        height = int(
+            self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        )
+
+        fps = self.capture.get(
+            cv2.CAP_PROP_FPS
+        )
+
+        if fps <= 0:
+            fps = self.config.target_fps
+
+        total_frames = int(
+            self.capture.get(
+                cv2.CAP_PROP_FRAME_COUNT
+            )
+        )
+
+        if total_frames <= 0:
+            total_frames = None
+
+        self.video_info = VideoInfo(
+            width=width,
+            height=height,
+            fps=fps,
+            total_frames=total_frames,
+            source=self.config.source,
+        )
 
     def read(self):
 
         if self.capture is None:
-            raise VideoSourceError("Video source is not opened.")
+            raise VideoOpenError(
+                "Video source is not opened."
+            )
 
-        success, frame = self.capture.read()
+        success, image = self.capture.read()
 
         if not success:
-
-            if self.config.loop_video:
-                self.capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                success, frame = self.capture.read()
-
-            if not success:
-                raise FrameReadError("End of video or unable to read frame.")
+            raise FrameReadError(
+                "End of video reached."
+            )
 
         self.frame_id += 1
 
-        return VideoFrame(
+        return Frame(
             frame_id=self.frame_id,
-            timestamp=datetime.now(),
-            image=frame
+            image=image,
+            timestamp=time.time(),
         )
 
     def release(self):
 
         if self.capture is not None:
             self.capture.release()
+
+        self.capture = None
+
+    def is_open(self):
+
+        return (
+            self.capture is not None
+            and self.capture.isOpened()
+        )

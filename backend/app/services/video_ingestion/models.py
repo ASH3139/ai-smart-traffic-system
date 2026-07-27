@@ -1,14 +1,34 @@
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any
+from typing import Optional
+
+import numpy as np
 
 
-@dataclass
-class VideoFrame:
+@dataclass(slots=True)
+class Frame:
     """
-    Represents a single frame with its metadata.
+    Represents one frame received from a video source.
     """
 
     frame_id: int
-    timestamp: datetime
-    image: Any
+
+    image: np.ndarray
+
+    timestamp: float
+
+
+@dataclass(slots=True)
+class VideoInfo:
+    """
+    Metadata about the opened video source.
+    """
+
+    width: int
+
+    height: int
+
+    fps: float
+
+    total_frames: Optional[int]
+
+    source: str

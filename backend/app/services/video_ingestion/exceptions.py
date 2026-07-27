@@ -1,8 +1,13 @@
-class VideoSourceError(Exception):
-    """Raised when a video source cannot be opened."""
+class VideoError(Exception):
+    """Base exception for video ingestion."""
     pass
 
 
-class FrameReadError(Exception):
+class VideoOpenError(VideoError):
+    """Raised when the video source cannot be opened."""
+    pass
+
+
+class FrameReadError(VideoError):
     """Raised when a frame cannot be read."""
     pass
