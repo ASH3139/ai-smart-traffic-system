@@ -11,13 +11,14 @@ class AnalyticsService:
 
         self.calculators = PIPELINE
 
-    def process(self, tracks, speeds):
+    def process(self, frame, tracks, speeds):
 
         statistics = TrafficStatistics()
 
         for calculator in self.calculators:
 
             calculator.calculate(
+                frame,
                 tracks,
                 speeds,
                 statistics,

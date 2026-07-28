@@ -24,13 +24,9 @@ def main():
 
     speed_config = SpeedConfig()
 
-    optical_flow = OpticalFlow(
-        speed_config.optical_flow
-    )
+    optical_flow = OpticalFlow(speed_config.optical_flow)
 
-    speed_service = SpeedService(
-        speed_config
-    )
+    speed_service = SpeedService(speed_config)
 
     analytics = AnalyticsService()
 
@@ -74,6 +70,7 @@ def main():
         # -----------------------------
 
         statistics = analytics.process(
+            frame,
             tracks,
             speeds,
         )
@@ -82,10 +79,7 @@ def main():
         # Draw Tracks
         # -----------------------------
 
-        speed_lookup = {
-            speed.track_id: speed
-            for speed in speeds
-        }
+        speed_lookup = {speed.track_id: speed for speed in speeds}
 
         for track in tracks:
 
@@ -101,9 +95,7 @@ def main():
 
             if track.track_id in speed_lookup:
 
-                label += (
-                    f" {speed_lookup[track.track_id].speed_kmh:.1f} km/h"
-                )
+                label += f" {speed_lookup[track.track_id].speed_kmh:.1f} km/h"
 
             cv2.putText(
                 image,
@@ -148,13 +140,86 @@ def main():
             (0, 255, 255),
             2,
         )
+        cv2.putText(
+            image,
+            f"Traffic Density : {statistics.density:.2f}",
+            (20, 125),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.75,
+            (0, 255, 255),
+            2,
+        )
+        cv2.putText(
+            image,
+            f"Queue Length : {statistics.queue_length}",
+            (20, 155),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.75,
+            (0, 255, 255),
+            2,
+        )
+        cv2.putText(
+            image,
+            f"Waiting Vehicles : {statistics.waiting_vehicles}",
+            (20, 185),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.75,
+            (0, 255, 255),
+            2,
+        )
 
+        cv2.putText(
+            image,
+            f"Avg Waiting : {statistics.average_waiting_time:.1f}s",
+            (20, 215),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.75,
+            (0, 255, 255),
+            2,
+        )
+
+        cv2.putText(
+            image,
+            f"Max Waiting : {statistics.maximum_waiting_time:.1f}s",
+            (20, 245),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.75,
+            (0, 255, 255),
+            2,
+        )
+        cv2.putText(
+            image,
+            f"PCU : {statistics.pcu:.1f}",
+            (20, 275),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.75,
+            (0, 255, 255),
+            2,
+        )
+        cv2.putText(
+            image,
+            f"Vehicles Passed (1 min): {statistics.vehicles_passed_last_minute}",
+            (20, 305),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.75,
+            (0, 255, 255),
+            2,
+        )
+
+        cv2.putText(
+            image,
+            f"Traffic Flow : {statistics.traffic_flow:.0f} veh/hr",
+            (20, 335),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.75,
+            (0, 255, 255),
+            2,
+        )
         cv2.imshow(
             "Traffic Analytics",
             image,
         )
 
-        
         key = cv2.waitKey(1) & 0xFF
 
         if key == ord("q"):

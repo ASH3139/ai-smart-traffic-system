@@ -5,16 +5,13 @@ class AverageSpeedCalculator(BaseCalculator):
 
     NAME = "Average Speed"
 
-    def calculate(self, tracks, speeds, statistics):
+    def calculate(self, frame, tracks, speeds, statistics):
 
         if not speeds:
             statistics.average_speed = 0.0
             return statistics
 
-        total_speed = sum(
-            speed.speed_kmh
-            for speed in speeds
-        )
+        total_speed = sum(speed.speed_kmh for speed in speeds)
 
         statistics.average_speed = total_speed / len(speeds)
 

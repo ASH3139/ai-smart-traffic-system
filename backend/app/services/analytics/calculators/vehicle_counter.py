@@ -10,7 +10,7 @@ class VehicleCounter(BaseCalculator):
         self.current_count = 0
         self.unique_tracks = set()
 
-    def calculate(self, tracks, speeds, statistics):
+    def calculate(self, frame, tracks, speeds, statistics):
 
         self.current_count = len(tracks)
 
