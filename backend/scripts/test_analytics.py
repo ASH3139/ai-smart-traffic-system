@@ -1,14 +1,16 @@
 import cv2
 
+
 from backend.app.services.video_ingestion.service import VideoService
-
 from backend.app.services.tracking.service import TrackingService
-
 from backend.app.services.speed.config import SpeedConfig
 from backend.app.services.speed.optical_flow import OpticalFlow
 from backend.app.services.speed.service import SpeedService
-
 from backend.app.services.analytics.service import AnalyticsService
+from backend.app.services.lane.service import LaneService
+from backend.app.services.roi.service import ROIService
+from backend.app.services.stop_line.service import StopLineService
+from backend.app.services.counting_line.service import CountingLineService
 
 
 def main():
@@ -29,6 +31,10 @@ def main():
     speed_service = SpeedService(speed_config)
 
     analytics = AnalyticsService()
+    lane_service = LaneService()
+    roi_service = ROIService()
+    stop_line_service = StopLineService()
+    counting_line_service = CountingLineService()
 
     print("=" * 60)
     print("Traffic Analytics Started")
@@ -43,12 +49,21 @@ def main():
         frame = video.get_frame()
 
         image = frame.image.copy()
+        # -----------------------------
+        # Spatial Layer
+        # -----------------------------
+
+        roi_service.draw(image)
+        stop_line_service.draw(image)
+        counting_line_service.draw(image)
 
         # -----------------------------
         # Tracking
         # -----------------------------
 
         tracks = tracker.track(image)
+        for track in tracks:
+            lane_service.assign_lane(track)
 
         # -----------------------------
         # Optical Flow
@@ -91,21 +106,23 @@ def main():
                 2,
             )
 
-            label = f"{track.class_name} ID:{track.track_id}"
+        vehicle_speed = 0.0
+        if track.track_id in speed_lookup:
+            vehicle_speed = speed_lookup[track.track_id].speed_kmh
 
-            if track.track_id in speed_lookup:
+        label = (
+            f"ID:{track.track_id} " f"L:{track.lane_id} " f"{vehicle_speed:.1f} km/h"
+        )
 
-                label += f" {speed_lookup[track.track_id].speed_kmh:.1f} km/h"
-
-            cv2.putText(
-                image,
-                label,
-                (track.x1, track.y1 - 8),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.55,
-                (0, 255, 0),
-                2,
-            )
+        cv2.putText(
+            image,
+            label,
+            (track.x1, track.y1 - 8),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.55,
+            (0, 255, 0),
+            2,
+        )
 
         # -----------------------------
         # Analytics Dashboard

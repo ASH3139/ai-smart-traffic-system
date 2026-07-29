@@ -16,3 +16,5 @@ class Track:
     y1: int
     x2: int
     y2: int
+
+    lane_id: int | None = None

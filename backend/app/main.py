@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 
-from app.api.health import router as health_router
-from app.api.version import router as version_router
+from backend.app.api.health import router as health_router
+from backend.app.api.version import router as version_router
 
-from app.core.settings import settings
-from app.core.logging import logger
+from backend.app.core.settings import settings
+from backend.app.core.logging import logger
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
