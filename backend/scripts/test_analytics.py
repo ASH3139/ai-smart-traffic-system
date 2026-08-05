@@ -11,6 +11,7 @@ from backend.app.services.lane.service import LaneService
 from backend.app.services.roi.service import ROIService
 from backend.app.services.stop_line.service import StopLineService
 from backend.app.services.counting_line.service import CountingLineService
+from backend.app.services.behavior.service import BehaviorService
 
 
 def main():
@@ -35,6 +36,11 @@ def main():
     roi_service = ROIService()
     stop_line_service = StopLineService()
     counting_line_service = CountingLineService()
+
+    behavior = BehaviorService(
+        stop_line_y=stop_line_service.stop_line.start[1],
+        counting_line_y=counting_line_service.counting_line.start[1],
+    )
 
     print("=" * 60)
     print("Traffic Analytics Started")
@@ -97,6 +103,12 @@ def main():
         speed_lookup = {speed.track_id: speed for speed in speeds}
 
         for track in tracks:
+            events = behavior.update(track)
+            if events["counting_line_crossed"]:
+                print(f"Track {track.track_id} crossed Counting Line")
+
+            if events["stop_line_crossed"]:
+                print(f"Track {track.track_id} crossed Stop Line")
 
             cv2.rectangle(
                 image,
