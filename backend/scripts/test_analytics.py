@@ -1,38 +1,32 @@
 import cv2
 
-from backend.app.services.video_ingestion.service import VideoService
-from backend.app.services.tracking.service import TrackingService
-
-from backend.app.services.speed.config import SpeedConfig
-from backend.app.services.speed.optical_flow import OpticalFlow
-from backend.app.services.speed.service import SpeedService
-
-from backend.app.services.analytics.service import AnalyticsService
-from backend.app.services.lane_analytics.service import LaneAnalyticsService
 
 from backend.app.services.lane.service import LaneService
 from backend.app.services.roi.service import ROIService
 from backend.app.services.stop_line.service import StopLineService
 from backend.app.services.counting_line.service import CountingLineService
 
+from backend.app.services.traffic_signal.models import SignalState
+
 from backend.app.services.behavior.service import BehaviorService
+from backend.app.services.system.service import TrafficSystemService
 
 
 def draw_tracks(
     image,
     tracks,
     speed_lookup,
-    behavior,
+    behavior_events,
 ):
 
     for track in tracks:
 
-        events = behavior.update(track)
+        events = behavior_events.get(track.track_id, {})
 
-        if events["counting_line_crossed"]:
+        if events.get("counting_line_crossed"):
             print(f"Track {track.track_id} crossed Counting Line")
 
-        if events["stop_line_crossed"]:
+        if events.get("stop_line_crossed"):
             print(f"Track {track.track_id} crossed Stop Line")
 
         cv2.rectangle(
@@ -69,22 +63,8 @@ def main():
     # Initialize Services
     # ---------------------------------
 
-    video = VideoService()
-    video.start()
-
-    tracker = TrackingService()
-
-    speed_config = SpeedConfig()
-
-    optical_flow = OpticalFlow(speed_config.optical_flow)
-
-    speed_service = SpeedService(speed_config)
-
-    analytics = AnalyticsService()
-
-    lane_analytics = LaneAnalyticsService()
-
-    lane_service = LaneService()
+    system = TrafficSystemService()
+    system.start()
 
     roi_service = ROIService()
 
@@ -107,9 +87,16 @@ def main():
 
     while True:
 
-        frame = video.get_frame()
+        result = system.process_frame()
 
-        image = frame.image.copy()
+        frame = result.frame
+        image = result.image
+        tracks = result.tracks
+        speeds = result.speeds
+        statistics = result.statistics
+        lane_statistics = result.lane_statistics
+        behavior_events = result.behavior_events
+        signal = result.signal
 
         # ---------------------------------
         # Spatial Layer
@@ -121,51 +108,7 @@ def main():
 
         counting_line_service.draw(image)
 
-        # ---------------------------------
-        # Tracking
-        # ---------------------------------
-
-        tracks = tracker.track(image)
-
-        for track in tracks:
-
-            lane_service.assign_lane(track)
-
-        # ---------------------------------
-        # Optical Flow
-        # ---------------------------------
-
-        flow = optical_flow.compute(image)
-
-        # ---------------------------------
-        # Speed
-        # ---------------------------------
-
-        speeds = speed_service.calculate(
-            flow,
-            tracks,
-        )
-
         speed_lookup = {speed.track_id: speed for speed in speeds}
-
-        # ---------------------------------
-        # Global Analytics
-        # ---------------------------------
-
-        statistics = analytics.process(
-            frame,
-            tracks,
-            speeds,
-        )
-
-        # ---------------------------------
-        # Lane Analytics
-        # ---------------------------------
-
-        lane_statistics = lane_analytics.process(
-            tracks,
-            speeds,
-        )
 
         # ---------------------------------
         # Draw Tracks
@@ -175,7 +118,7 @@ def main():
             image,
             tracks,
             speed_lookup,
-            behavior,
+            behavior_events,
         )
         # ---------------------------------
         # Global Analytics Dashboard
@@ -278,11 +221,102 @@ def main():
         if key == ord("q"):
             break
 
+        cv2.putText(
+            image,
+            "AI DECISION",
+            (20, y),
+            font,
+            0.75,
+            (0, 255, 0),
+            2,
+        )
+
+    y += 30
+
+    cv2.putText(
+        image,
+        f"Green Lane : {signal.selected_lane}",
+        (20, y),
+        font,
+        0.58,
+        dashboard_color,
+        2,
+    )
+
+    y += 25
+
+    cv2.putText(
+        image,
+        f"Green Time : {signal.green_time} sec",
+        (20, y),
+        font,
+        0.58,
+        dashboard_color,
+        2,
+    )
+
+    y += 25
+
+    cv2.putText(
+        image,
+        f"Reason : {signal.reason}",
+        (20, y),
+        font,
+        0.58,
+        dashboard_color,
+        2,
+    )
+    y += 40
+
+    cv2.putText(
+        image,
+        "TRAFFIC SIGNAL",
+        (20, y),
+        font,
+        0.75,
+        (255, 200, 0),
+        2,
+    )
+
+    y += 30
+
+    for lane in range(1, 4):
+
+        color = "RED"
+
+    if lane == signal.current_green_lane and signal.state == SignalState.GREEN:
+        color = "GREEN"
+
+    elif lane == signal.current_green_lane and signal.state == SignalState.YELLOW:
+        color = "YELLOW"
+
+    cv2.putText(
+        image,
+        f"Lane {lane} : {color}",
+        (20, y),
+        font,
+        0.58,
+        dashboard_color,
+        2,
+    )
+
+    y += 25
+
+    cv2.putText(
+        image,
+        f"Remaining : {signal.remaining_time}s",
+        (20, y),
+        font,
+        0.58,
+        dashboard_color,
+        2,
+    )
+
     # ---------------------------------
     # Cleanup
     # ---------------------------------
 
-    video.stop()
+    system.stop()
 
     cv2.destroyAllWindows()
 

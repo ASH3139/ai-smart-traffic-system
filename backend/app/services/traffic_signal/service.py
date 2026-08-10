@@ -6,7 +6,7 @@ from .models import TrafficSignal, SignalState
 
 class TrafficSignalService:
     """
-    Controls the traffic signal state machine.
+    Controls the traffic signal.
     """
 
     def __init__(self):
@@ -30,7 +30,10 @@ class TrafficSignalService:
 
     def update(self):
         """
-        Update the signal timer.
+        Update the traffic signal timer.
+
+        Returns:
+            bool: True if a new AI decision is required.
         """
 
         now = time.time()
@@ -38,43 +41,32 @@ class TrafficSignalService:
         elapsed = now - self.last_update
 
         if elapsed < 1:
-            return self.signal
+            return False
 
         self.last_update = now
 
         self.signal.remaining_time -= 1
 
         if self.signal.remaining_time > 0:
-            return self.signal
+            return False
 
-        self._next_state()
-
-        return self.signal
+        return True
 
     def get_state(self):
 
         return self.signal
 
-    # ----------------------------------
-    # Internal State Machine
-    # ----------------------------------
+    def apply_decision(self, decision):
+        """
+        Apply a new decision from the AI.
+        """
 
-    def _next_state(self):
+        self.signal.current_green_lane = decision.selected_lane
 
-        if self.signal.state == SignalState.GREEN:
+        self.signal.green_time = decision.green_time
 
-            self.signal.state = SignalState.YELLOW
-            self.signal.remaining_time = self.signal.yellow_time
+        self.signal.remaining_time = decision.green_time
 
-            return
+        self.signal.state = SignalState.GREEN
 
-        if self.signal.state == SignalState.YELLOW:
-
-            self.signal.current_green_lane += 1
-
-            if self.signal.current_green_lane > self.config.lane_count:
-                self.signal.current_green_lane = 1
-
-            self.signal.state = SignalState.GREEN
-
-            self.signal.remaining_time = self.signal.green_time
+        self.signal.last_reason = decision.reason

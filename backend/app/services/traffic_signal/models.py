@@ -10,6 +10,9 @@ class SignalState(Enum):
 
 @dataclass(slots=True)
 class TrafficSignal:
+    """
+    Represents the current state of the traffic signal.
+    """
 
     current_green_lane: int = 1
 
@@ -22,3 +25,6 @@ class TrafficSignal:
     red_time: int = 30
 
     remaining_time: int = 30
+
+    # Last AI Decision
+    last_reason: str = "System Started"
