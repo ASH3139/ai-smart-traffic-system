@@ -10,6 +10,7 @@ class DecisionEngineService:
     def __init__(self):
 
         self.config = DecisionConfig()
+        self.last_decision = None
 
     def process(
         self,
@@ -79,8 +80,12 @@ class DecisionEngineService:
 
             reason = "High Queue"
 
-        return Decision(
+        decision = Decision(
             selected_lane=best_lane.lane_id,
             green_time=green_time,
             reason=reason,
         )
+
+        self.last_decision = decision
+
+        return decision

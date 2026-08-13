@@ -24,7 +24,7 @@ class TrackingService:
             tracker=self.config.tracker,
             conf=self.config.confidence,
             iou=self.config.iou,
-            verbose=False
+            verbose=False,
         )
 
         tracks = []

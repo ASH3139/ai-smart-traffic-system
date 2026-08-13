@@ -17,6 +17,9 @@ from backend.app.services.behavior.service import BehaviorService
 from backend.app.services.traffic_signal.service import TrafficSignalService
 from backend.app.services.decision_engine.service import DecisionEngineService
 from .models import FrameResult
+from .drawing import SystemDrawer
+import threading
+import time
 
 
 class TrafficSystemService:
@@ -74,6 +77,15 @@ class TrafficSystemService:
         self.signal = TrafficSignalService()
 
         self.decision = DecisionEngineService()
+        self.drawer = SystemDrawer()
+        # -----------------------------
+        # Background Processing
+        # -----------------------------
+
+        self.running = False
+        self.thread = None
+        self.latest_result = None
+        self.latest_image = None
 
     # -----------------------------
     # Public API
@@ -81,15 +93,29 @@ class TrafficSystemService:
 
     def start(self):
         """
-        Start the traffic system.
+        Start background processing.
         """
 
         self.video.start()
 
+        self.running = True
+
+        self.thread = threading.Thread(
+            target=self._processing_loop,
+            daemon=True,
+        )
+
+        self.thread.start()
+
     def stop(self):
         """
-        Stop the traffic system.
+        Stop background processing.
         """
+
+        self.running = False
+
+        if self.thread is not None:
+            self.thread.join()
 
         self.video.stop()
 
@@ -105,7 +131,6 @@ class TrafficSystemService:
         # -----------------------------
         # Tracking
         # -----------------------------
-
         tracks = self.tracker.track(image)
 
         for track in tracks:
@@ -116,7 +141,6 @@ class TrafficSystemService:
         # -----------------------------
 
         flow = self.optical_flow.compute(image)
-
         # -----------------------------
         # Speed
         # -----------------------------
@@ -129,7 +153,6 @@ class TrafficSystemService:
         # -----------------------------
         # Analytics
         # -----------------------------
-
         statistics = self.analytics.process(
             frame,
             tracks,
@@ -144,7 +167,6 @@ class TrafficSystemService:
         # -----------------------------
         # Behavior
         # -----------------------------
-
         behavior_events = {}
 
         for track in tracks:
@@ -165,8 +187,7 @@ class TrafficSystemService:
             )
 
             self.signal.apply_decision(decision)
-
-        return FrameResult(
+        result = FrameResult(
             frame=frame,
             image=image,
             tracks=tracks,
@@ -176,3 +197,46 @@ class TrafficSystemService:
             behavior_events=behavior_events,
             signal=self.signal.get_state(),
         )
+
+        image = self.drawer.draw(
+            image,
+            result,
+            self,
+        )
+
+        result.image = image
+        self.latest_result = result
+        self.latest_image = image.copy()
+        return result
+
+    def _processing_loop(self):
+
+        while self.running:
+
+            try:
+
+                self.process_frame()
+
+            except Exception as e:
+
+                import traceback
+
+                traceback.print_exc()
+
+                break
+
+            time.sleep(0.001)
+
+    def get_latest_result(self):
+        """
+        Returns the latest processed frame.
+        """
+
+        return self.latest_result
+
+    def get_latest_image(self):
+        """
+        Returns the latest processed image.
+        """
+
+        return self.latest_image
