@@ -9,3 +9,10 @@ psycopg2-binary
 alembic
 opencv-python
 ultralytics
+
+pytest
+black
+isort
+flake8
+
+gunicorn
