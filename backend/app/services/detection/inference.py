@@ -13,7 +13,9 @@ class DetectionInference:
             image,
             conf=self.config.confidence,
             iou=self.config.iou,
-            verbose=False
+            device=self.config.device,
+            imgsz=self.config.img_size,
+            verbose=False,
         )
 
         detections = []

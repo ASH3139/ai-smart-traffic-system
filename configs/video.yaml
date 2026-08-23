@@ -6,7 +6,7 @@ video:
 
   target_fps: 30
 
-  loop_video: false
+  loop_video: true
 
   buffer_size: 5
 

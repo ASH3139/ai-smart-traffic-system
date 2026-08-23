@@ -1,7 +1,6 @@
 from pathlib import Path
 import yaml
 
-
 CONFIG_FILE = Path("configs/detection.yaml")
 
 
@@ -17,3 +16,4 @@ class DetectionConfig:
         self.iou = config["iou_threshold"]
         self.device = config["device"]
         self.vehicle_classes = config["vehicle_classes"]
+        self.img_size = config["img_size"]

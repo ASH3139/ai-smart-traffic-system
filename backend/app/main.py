@@ -4,7 +4,6 @@ from backend.app.api.health import router as health_router
 from backend.app.api.version import router as version_router
 from backend.app.core.settings import settings
 from backend.app.core.logging import logger
-from backend.app.dependencies.system import system
 from backend.app.api.analytics import router as analytics_router
 from backend.app.api.lanes import router as lanes_router
 from backend.app.api.signal import router as signal_router
