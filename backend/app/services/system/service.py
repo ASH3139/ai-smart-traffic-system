@@ -21,6 +21,10 @@ from .drawing import SystemDrawer
 import threading
 import time
 
+from backend.app.database.session_manager import get_db_session
+from backend.app.services.persistence.service import PersistenceService
+from backend.app.services.video_ingestion.exceptions import VideoEndOfStream
+
 
 class TrafficSystemService:
     """
@@ -32,7 +36,7 @@ class TrafficSystemService:
         # -----------------------------
         # Video
         # -----------------------------
-        self.video = VideoService()
+        self.video = None
 
         # -----------------------------
         # Tracking
@@ -78,6 +82,10 @@ class TrafficSystemService:
 
         self.decision = DecisionEngineService()
         self.drawer = SystemDrawer()
+        self.persistence = PersistenceService()
+
+        self.last_persistence_time = 0.0
+        self.persistence_interval = 10.0
         # -----------------------------
         # Background Processing
         # -----------------------------
@@ -95,6 +103,31 @@ class TrafficSystemService:
         """
         Start background processing.
         """
+
+        camera_source = None
+
+        try:
+            with get_db_session() as session:
+
+                camera = self.persistence.get_active_camera(session)
+
+                if camera is not None:
+                    camera_source = camera.source
+
+                    print(f"Using active camera: " f"{camera.name}")
+
+        except Exception:
+
+            import traceback
+
+            print(
+                "Unable to load camera from database. "
+                "Falling back to YAML configuration."
+            )
+
+            traceback.print_exc()
+
+        self.video = VideoService(source=camera_source)
 
         self.video.start()
 
@@ -117,7 +150,8 @@ class TrafficSystemService:
         if self.thread is not None:
             self.thread.join()
 
-        self.video.stop()
+        if self.video is not None:
+            self.video.stop()
 
     def process_frame(self):
         """
@@ -187,6 +221,17 @@ class TrafficSystemService:
             )
 
             self.signal.apply_decision(decision)
+
+            with get_db_session() as session:
+
+                self.persistence.save_signal_decision(
+                    session,
+                    decision,
+                )
+        self._persist_result(
+            statistics,
+            lane_statistics,
+        )
         result = FrameResult(
             frame=frame,
             image=image,
@@ -209,6 +254,30 @@ class TrafficSystemService:
         self.latest_image = image.copy()
         return result
 
+    def _persist_result(self, statistics, lane_statistics):
+        """
+        Persist periodic traffic analytics and lane analytics.
+        """
+
+        current_time = time.monotonic()
+
+        if current_time - self.last_persistence_time < self.persistence_interval:
+            return
+
+        with get_db_session() as session:
+
+            self.persistence.save_traffic_statistics(
+                session,
+                statistics,
+            )
+
+            self.persistence.save_lane_statistics(
+                session,
+                lane_statistics,
+            )
+
+        self.last_persistence_time = current_time
+
     def _processing_loop(self):
 
         while self.running:
@@ -217,12 +286,20 @@ class TrafficSystemService:
 
                 self.process_frame()
 
-            except Exception as e:
+            except VideoEndOfStream:
+
+                print("Video stream ended.")
+
+                self.running = False
+                break
+
+            except Exception:
 
                 import traceback
 
                 traceback.print_exc()
 
+                self.running = False
                 break
 
             time.sleep(0.001)

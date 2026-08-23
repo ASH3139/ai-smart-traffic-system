@@ -6,9 +6,16 @@ class VideoService:
     High-level interface for video ingestion.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        source: str | None = None,
+        source_type: str | None = None,
+    ):
 
-        self.reader = FrameReader()
+        self.reader = FrameReader(
+            source=source,
+            source_type=source_type,
+        )
 
     def start(self):
 

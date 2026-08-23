@@ -1,4 +1,5 @@
 import cv2
+import time
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -15,11 +16,12 @@ def generate_frames(
     system: TrafficSystemService,
 ):
 
-    while True:
+    while system.running:
 
         image = system.get_latest_image()
 
         if image is None:
+            time.sleep(0.01)
             continue
 
         success, buffer = cv2.imencode(
@@ -28,11 +30,16 @@ def generate_frames(
         )
 
         if not success:
+            time.sleep(0.01)
             continue
 
         frame = buffer.tobytes()
 
         yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
+
+        # Prevent the streaming loop from
+        # consuming CPU unnecessarily.
+        time.sleep(0.03)
 
 
 @router.get(

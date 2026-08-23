@@ -12,6 +12,9 @@ from backend.app.api.video import router as video_router
 from backend.app.system import system
 from backend.app.api.statistics import router as statistics_router
 from backend.app.api.decision import router as decision_router
+from backend.app.api.history import router as history_router
+from backend.app.api.status import router as status_router
+from backend.app.api.cameras import router as cameras_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -27,6 +30,9 @@ app.include_router(signal_router)
 app.include_router(video_router)
 app.include_router(statistics_router)
 app.include_router(decision_router)
+app.include_router(history_router)
+app.include_router(status_router)
+app.include_router(cameras_router)
 
 
 @app.on_event("startup")

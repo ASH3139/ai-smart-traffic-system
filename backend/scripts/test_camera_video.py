@@ -1,5 +1,8 @@
+import cv2
+
 from backend.app.database.session_manager import get_db_session
 from backend.app.services.persistence.service import PersistenceService
+from backend.app.services.video_ingestion.service import VideoService
 
 
 def main():
@@ -14,16 +17,19 @@ def main():
             print("No active camera found.")
             return
 
-        print("=" * 50)
-        print("Active Camera")
-        print("=" * 50)
+        print(f"Using camera source: {camera.source}")
 
-        print(f"ID:          {camera.id}")
-        print(f"Name:        {camera.name}")
-        print(f"Source:      {camera.source}")
-        print(f"Source Type: {camera.source_type}")
-        print(f"Location:    {camera.location}")
-        print(f"Active:      {camera.is_active}")
+        video = VideoService(source=camera.source)
+
+        video.start()
+
+        print(video.video_info)
+
+        frame = video.get_frame()
+
+        print(f"First frame shape: {frame.image.shape}")
+
+        video.stop()
 
 
 if __name__ == "__main__":

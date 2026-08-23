@@ -2,7 +2,11 @@ import cv2
 import time
 
 from .config import VideoConfig
-from .exceptions import VideoOpenError, FrameReadError
+from .exceptions import (
+    VideoOpenError,
+    FrameReadError,
+    VideoEndOfStream,
+)
 from .models import Frame, VideoInfo
 
 
@@ -16,9 +20,18 @@ class FrameReader:
     - RTSP streams
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        source: str | None = None,
+        source_type: str | None = None,
+    ):
 
         self.config = VideoConfig()
+
+        if source is not None:
+            self.config.source = source
+
+        self.source_type = source_type
 
         self.capture = None
 
@@ -34,35 +47,21 @@ class FrameReader:
 
     def open(self):
 
-        self.capture = cv2.VideoCapture(
-            self.config.source
-        )
+        self.capture = cv2.VideoCapture(self.config.source)
 
         if not self.capture.isOpened():
-            raise VideoOpenError(
-                f"Unable to open video source: {self.config.source}"
-            )
+            raise VideoOpenError(f"Unable to open video source: {self.config.source}")
 
-        width = int(
-            self.capture.get(cv2.CAP_PROP_FRAME_WIDTH)
-        )
+        width = int(self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
 
-        height = int(
-            self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        )
+        height = int(self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        fps = self.capture.get(
-            cv2.CAP_PROP_FPS
-        )
+        fps = self.capture.get(cv2.CAP_PROP_FPS)
 
         if fps <= 0:
             fps = self.config.target_fps
 
-        total_frames = int(
-            self.capture.get(
-                cv2.CAP_PROP_FRAME_COUNT
-            )
-        )
+        total_frames = int(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
         if total_frames <= 0:
             total_frames = None
@@ -78,15 +77,51 @@ class FrameReader:
     def read(self):
 
         if self.capture is None:
-            raise VideoOpenError(
-                "Video source is not opened."
-            )
+            raise VideoOpenError("Video source is not opened.")
 
         success, image = self.capture.read()
 
         if not success:
-            raise FrameReadError(
-                "End of video reached."
+
+            # -----------------------------
+            # Local video file
+            # -----------------------------
+            if self._is_file_source():
+
+                # Restart video when looping is enabled
+                if self.config.loop_video:
+
+                    self.capture.set(
+                        cv2.CAP_PROP_POS_FRAMES,
+                        0,
+                    )
+
+                    success, image = self.capture.read()
+
+                    if not success:
+                        raise FrameReadError("Unable to restart video source.")
+
+                else:
+
+                    raise VideoEndOfStream("End of video reached.")
+
+            # -----------------------------
+            # Live source
+            # -----------------------------
+            else:
+
+                raise FrameReadError("Unable to read frame from live video source.")
+
+        # -----------------------------
+        # Resize frame
+        # -----------------------------
+        if image.shape[1] != self.config.width or image.shape[0] != self.config.height:
+            image = cv2.resize(
+                image,
+                (
+                    self.config.width,
+                    self.config.height,
+                ),
             )
 
         self.frame_id += 1
@@ -97,6 +132,19 @@ class FrameReader:
             timestamp=time.time(),
         )
 
+    def _is_file_source(self) -> bool:
+        """
+        Returns True when the configured source
+        is a local video file.
+        """
+
+        if self.source_type is not None:
+            return self.source_type.lower() == "file"
+
+        source = str(self.config.source).lower()
+
+        return source.endswith((".mp4", ".avi", ".mov", ".mkv", ".webm"))
+
     def release(self):
 
         if self.capture is not None:
@@ -106,7 +154,4 @@ class FrameReader:
 
     def is_open(self):
 
-        return (
-            self.capture is not None
-            and self.capture.isOpened()
-        )
+        return self.capture is not None and self.capture.isOpened()
