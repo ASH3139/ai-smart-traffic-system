@@ -12,3 +12,5 @@ class VideoConfig:
         self.width = config["width"]
         self.height = config["height"]
         self.buffer_size = config["buffer_size"]
+        self.loop_video = config["loop_video"]
+        self.display = config["display"]

@@ -3,11 +3,6 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from sqlalchemy import select
-
-from backend.app.database.tables.lane_analytics import LaneAnalytics
-from backend.app.database.tables.signal_decision import SignalDecision
-from backend.app.database.tables.traffic_analytics import TrafficAnalytics
-
 from backend.app.database.tables.camera import Camera
 from backend.app.database.tables.lane_analytics import LaneAnalytics
 from backend.app.database.tables.signal_decision import SignalDecision
