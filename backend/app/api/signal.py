@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from backend.app.dependencies.system import get_system
 from backend.app.services.system.service import TrafficSystemService
 from backend.app.schemas.signal import SignalResponse
+from backend.app.database.tables.user import User
+from backend.app.dependencies.auth import get_current_user
 
 router = APIRouter(
     tags=["Traffic Signal"],
@@ -16,6 +18,7 @@ router = APIRouter(
 )
 def signal(
     system: TrafficSystemService = Depends(get_system),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Returns the current traffic signal state.

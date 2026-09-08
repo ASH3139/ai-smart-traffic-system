@@ -6,6 +6,8 @@ from fastapi.responses import StreamingResponse
 
 from backend.app.dependencies.system import get_system
 from backend.app.services.system.service import TrafficSystemService
+from backend.app.database.tables.user import User
+from backend.app.dependencies.auth import get_current_user
 
 router = APIRouter(
     tags=["Video Stream"],
@@ -48,6 +50,7 @@ def generate_frames(
 )
 def video(
     system: TrafficSystemService = Depends(get_system),
+    current_user: User = Depends(get_current_user),
 ):
 
     return StreamingResponse(

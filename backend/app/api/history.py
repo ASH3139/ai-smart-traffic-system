@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, Query
 
 from backend.app.database.session_manager import get_db_session
 from backend.app.services.persistence.service import PersistenceService
+from backend.app.database.tables.user import User
+from backend.app.dependencies.auth import get_current_user
 
 from backend.app.schemas.history import (
     TrafficHistoryResponse,
@@ -29,6 +31,7 @@ def traffic_history(
         ge=1,
         le=200,
     ),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Returns historical traffic analytics.
@@ -53,6 +56,7 @@ def lane_history(
         ge=1,
         le=200,
     ),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Returns historical lane analytics.
@@ -77,6 +81,7 @@ def signal_history(
         ge=1,
         le=200,
     ),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Returns historical traffic signal decisions.

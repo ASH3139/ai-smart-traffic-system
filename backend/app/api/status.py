@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends
 
 from backend.app.dependencies.system import get_system
 from backend.app.services.system.service import TrafficSystemService
+from backend.app.database.tables.user import User
+from backend.app.dependencies.auth import get_current_user
 
 router = APIRouter(
     tags=["System Status"],
@@ -14,6 +16,7 @@ router = APIRouter(
 )
 def status(
     system: TrafficSystemService = Depends(get_system),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Returns the current processing status.
