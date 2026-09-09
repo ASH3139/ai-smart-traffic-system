@@ -1,0 +1,40 @@
+%% Work 3 - Ingestion, Storage, Simulator
+graph TB
+    subgraph Source["Video Sources - PDF Stage 1"]
+        RTSP["RTSP CCTV<br/>Live stream"]
+        File["Video File<br/>datasets/videos/raw/<br/>traffic_sample2.mp4<br/>1920x1080 30FPS 625 frames<br/>video.yaml:2"]
+        Sim["Simulator<br/>MultiCamera<br/>video_ingestion/multi_camera.py"]
+    end
+
+    subgraph Ingestion["Ingestion - video_ingestion/"]
+        Config["VideoConfig<br/>config.py:16<br/>source, width 1280<br/>height 720<br/>target_fps 30<br/>loop_video true<br/>buffer 5"]
+        Reader["FrameReader<br/>frame_reader.py<br/>open():48<br/>VideoCapture<br/>read():77<br/>resize if needed:118<br/>loop handling:94"]
+        ModelFrame["Frame model<br/>models.py:8<br/>frame_id, image<br/>timestamp=time.time()"]
+        Service["VideoService<br/>service.py:4<br/>start()->open()<br/>get_frame()->read()<br/>stop()->release()"]
+    end
+
+    subgraph Storage["Storage"]
+        Persist["PersistenceService<br/>persistence/service.py<br/>save_traffic:150<br/>save_lane:172"]
+        DBTables["DB Tables<br/>traffic_analytics.py:9<br/>lane_analytics.py:9<br/>signal_decision.py:9"]
+        Interval["Throttled persist<br/>system/service.py:257<br/>monotonic()<br/>interval 10s"]
+    end
+
+    subgraph API["Ingestion APIs"]
+        Status["GET /status<br/>status.py:11<br/>STOPPED/RUNNING"]
+        VideoAPI["GET /video<br/>video.py:45<br/>StreamingResponse<br/>multipart/x-mixed-replace<br/>generate_frames:17<br/>sleep 0.03 ~33FPS"]
+        Latest["system/service.py<br/>latest_result:254<br/>latest_image:254<br/>get_latest_result:307"]
+    end
+
+    subgraph SystemOrch["Orchestrator"]
+        Start["system/service.py:102<br/>start()<br/>load camera DB or YAML<br/>VideoService(source)<br/>spawn thread _processing_loop"]
+        Loop["system/service.py:281<br/>_processing_loop<br/>while running:<br/>process_frame()<br/>sleep 0.001"]
+        Process["system/service.py:156<br/>process_frame()<br/>frame=video.get_frame()"]
+    end
+
+    RTSP & File & Sim --> Reader
+    Config --> Reader --> ModelFrame --> Service
+    Service --> Process --> Latest
+    Start --> Service --> Loop --> Process
+    Process --> Interval --> Persist --> DBTables
+    Latest --> VideoAPI
+    Latest --> Status

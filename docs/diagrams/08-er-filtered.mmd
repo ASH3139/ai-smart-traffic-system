@@ -1,0 +1,71 @@
+%% ER Diagram - Filtered to 7 Works (6 Tables)
+erDiagram
+    cameras {
+        int id PK
+        string name
+        string source
+        string source_type
+        string location
+        bool is_active
+        datetime created_at
+    }
+    users {
+        int id PK
+        string username UK
+        string password_hash
+        string role
+        bool is_active
+        datetime created_at
+    }
+    traffic_analytics {
+        int id PK
+        datetime timestamp
+        int current_vehicle_count
+        int total_vehicle_count
+        float average_speed
+        float density
+        int queue_length
+        int waiting_vehicles
+        float average_waiting_time
+        float maximum_waiting_time
+        float pcu
+        float traffic_flow
+    }
+    lane_analytics {
+        int id PK
+        datetime timestamp
+        int lane_id
+        int vehicle_count
+        float average_speed
+        float density
+        int queue_length
+        float traffic_flow
+    }
+    signal_decisions {
+        int id PK
+        datetime timestamp
+        int selected_lane
+        int green_time
+        string reason
+    }
+    vehicle_events {
+        int id PK
+        datetime timestamp
+        int track_id
+        string vehicle_type
+        int lane_id
+        float speed
+        string event_type
+    }
+
+    %% Relationships - logical, not enforced FK in code
+    cameras ||--o{ traffic_analytics : "active camera context"
+    cameras ||--o{ lane_analytics : "lane context"
+    cameras ||--o{ signal_decisions : "junction context"
+    cameras ||--o{ vehicle_events : "camera events"
+    traffic_analytics ||--o{ lane_analytics : "aggregated from"
+    lane_analytics ||--o{ signal_decisions : "input to decision"
+    vehicle_events ||--o{ traffic_analytics : "counted in"
+
+    %% Junction table removed in migration b4f4c72
+    %% Persistence: get_cameras_by_junction:90 expects junction_id but column missing

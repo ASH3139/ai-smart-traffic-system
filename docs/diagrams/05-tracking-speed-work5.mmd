@@ -1,0 +1,43 @@
+%% Work 5 - Tracking, Trajectories, Speed
+graph TB
+    subgraph TrackingConfig["Tracking Config - PDF Stage 3"]
+        YAML["tracking.yaml:2<br/>tracker: bytetrack.yaml<br/>persist: true<br/>conf: 0.35<br/>iou: 0.45<br/>display_track_id: true"]
+        DetConfig["DetectionConfig<br/>model: yolov8s.pt<br/>vehicle_classes 4"]
+    end
+
+    subgraph TrackingFlow["Tracking Flow"]
+        Service["TrackingService<br/>tracking/service.py:8<br/>__init__ loads YOLO + classes"]
+        TrackCall["track(image):22<br/>model.track(<br/>persist=true,<br/>tracker=bytetrack.yaml<br/>conf 0.35, iou 0.45)"]
+        Filter["Filter<br/>if boxes.id is None: return []<br/>class_name in vehicle_classes<br/>else skip"]
+        TrackModel["Track model<br/>tracking/models.py:6<br/>track_id, class_id<br/>class_name, confidence<br/>x1,y1,x2,y2<br/>lane_id=None"]
+        LaneAssign["Lane Assignment<br/>system/service.py:170<br/>lane.assign_lane(track)<br/>center_x=(x1+x2)//2<br/>lane/service.py:36"]
+        Trajectory["Trajectory<br/>ByteTrack persistent IDs<br/>IDs 1-24 stable<br/>across frames"]
+    end
+
+    subgraph SpeedConfig["Speed Config - PDF Stage 4"]
+        SConfig["SpeedConfig<br/>speed/config.py:7<br/>fps:30<br/>pixel_to_meter:0.05<br/>smoothing 5"]
+        FlowConfig["OpticalFlow config<br/>speed.yaml:9<br/>pyr_scale 0.5<br/>levels 3<br/>winsize 15<br/>iterations 3<br/>poly_n 5 sigma 1.2"]
+    end
+
+    subgraph SpeedFlow["Speed Estimation"]
+        OpticalFlow["OpticalFlow<br/>speed/optical_flow.py<br/>__init__ previous_gray None<br/>compute(image):18<br/>cvtColor BGR2GRAY<br/>if first: return None<br/>else calcOpticalFlowFarneback"]
+        Flow["Flow HxWx2<br/>dx,dy per pixel"]
+        Extractor["MotionExtractor<br/>speed/motion_extractor.py<br/>clip box<br/>roi=flow[y1:y2,x1:x2]<br/>mean(dx,dy)"]
+        Estimator["SpeedEstimator<br/>speed/speed_estimator.py:13<br/>estimate(dx,dy)<br/>pixel_dist=sqrt(dx2+dy2)<br/>meters=px*0.05<br/>mps=meters*30<br/>kmh=mps*3.6<br/>= px*5.4"]
+        SpeedModel["VehicleSpeed<br/>speed/models.py:6<br/>track_id, class_name<br/>speed_kmh, pixel_distance<br/>timestamp=time.time()"]
+        SpeedService["SpeedService<br/>speed/service.py:14<br/>calculate(flow,tracks)<br/>for each track:<br/>extract -> estimate<br/>-> VehicleSpeed"]
+        Example["Example<br/>dx=3.0px -> 16.1 km/h<br/>speeds 24 avg 12.8 km/h"]
+    end
+
+    subgraph SystemIntegr["System Integration"]
+        SysFlow["system/service.py:156<br/>flow=optical_flow.compute(image):177<br/>speeds=speed.calculate(flow,tracks):182"]
+    end
+
+    YAML & DetConfig --> Service --> TrackCall --> Filter --> TrackModel --> LaneAssign --> Trajectory
+    SConfig & FlowConfig --> OpticalFlow --> Flow --> Extractor --> Estimator --> SpeedModel --> SpeedService
+    TrackModel --> SpeedService
+    Flow --> SpeedService
+    LaneAssign -.-> TrackModel
+    SpeedService --> SysFlow
+    Trajectory -.-> SysFlow
+    Example -.-> Estimator

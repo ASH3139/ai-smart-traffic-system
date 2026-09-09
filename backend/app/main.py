@@ -15,6 +15,7 @@ from backend.app.api.history import router as history_router
 from backend.app.api.status import router as status_router
 from backend.app.api.cameras import router as cameras_router
 from backend.app.api.auth import router as auth_router
+from backend.app.api.incident_detection import router as incident_detection_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -34,6 +35,7 @@ app.include_router(history_router)
 app.include_router(status_router)
 app.include_router(cameras_router)
 app.include_router(auth_router)
+app.include_router(incident_detection_router)
 
 
 @app.on_event("startup")

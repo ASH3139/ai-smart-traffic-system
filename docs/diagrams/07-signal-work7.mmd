@@ -1,0 +1,56 @@
+%% Work 7 - Adaptive Signal & Speed Control
+graph TB
+    subgraph Config["Config - PDF Stages 9-10"]
+        PDFSignal["PDF Signal<br/>Every 30 seconds<br/>PCU voting + ML classifier<br/>Emergency preemption<br/>Anti-starvation"]
+        CodeConfig["SignalConfig<br/>traffic_signal/config.py:11<br/>lane_count 3<br/>default 30 yellow 5<br/>min 10 max 60"]
+        DecisionConfig["DecisionConfig<br/>decision_engine/config.py:7<br/>low 2 ->15s<br/>medium 5 ->25s<br/>high >5 ->40s"]
+    end
+
+    subgraph SignalService["Traffic Signal Service"]
+        Model["TrafficSignal<br/>traffic_signal/models.py<br/>current_green_lane 1<br/>state GREEN/YELLOW/RED<br/>green_time 30<br/>remaining_time 30<br/>last_reason System Started"]
+        Service["TrafficSignalService<br/>traffic_signal/service.py:7<br/>__init__ creates signal<br/>last_update=time.time()"]
+        Update["update():31<br/>elapsed=now-last_update<br/>if elapsed<1: return False<br/>remaining_time -=1<br/>if remaining==0: return True<br/>else False"]
+        GetState["get_state():55<br/>return TrafficSignal"]
+        Apply["apply_decision(decision):59<br/>current_green_lane=decision.lane<br/>green_time=decision.green_time<br/>remaining_time=green_time<br/>state=GREEN<br/>last_reason=reason"]
+    end
+
+    subgraph DecisionEngine["Decision Engine"]
+        DEModel["Decision<br/>decision_engine/models.py:6<br/>selected_lane<br/>green_time<br/>reason"]
+        DEService["DecisionEngineService<br/>decision_engine/service.py:5<br/>rule-based adaptive"]
+        Process["process(lane_stats, current_green):15<br/>if empty: return 15s No stats<br/>best = max(queue, vehicle_count)<br/>if current equals best<br/>stick to current<br/>queue<=2 ->15s Low<br/>queue<=5 ->25s Medium<br/>else 40s High<br/>last_decision=decision"]
+        Example["Example<br/>lane stats: q10<br/>lane2 best -> 40s<br/>High Queue<br/>selected_lane 3"]
+    end
+
+    subgraph SpeedControl["Speed Control - PDF Stage 10"]
+        PDFSpeed["PDF Speed<br/>Rule multipliers<br/>from congestion<br/>+ incident data"]
+        CodeSpeed["Code<br/>SpeedService<br/>speed/service.py:14<br/>VehicleSpeed per track<br/>No explicit limit<br/>recommendation yet<br/>→ future multiplier"]
+    end
+
+    subgraph SystemIntegr["System Integration"]
+        SysUpdate["system/service.py:214<br/>needs_decision=signal.update()<br/>if needs_decision:"]
+        SysDecision["system/service.py:218<br/>decision=decision.process(<br/>lane_statistics,<br/>current_green_lane)<br/>signal.apply_decision(decision)"]
+        SysPersist["system/service.py:225<br/>with get_db_session():<br/>save_signal_decision(session,decision)"]
+    end
+
+    subgraph StorageAPI["Storage & APIs"]
+        Table["signal_decisions<br/>tables/signal_decision.py:9<br/>id,timestamp<br/>selected_lane<br/>green_time, reason"]
+        Persist["Persistence<br/>persistence/service.py:213<br/>save_signal_decision"]
+        SignalAPI["GET /signal<br/>signal.py:12<br/>503 if no result<br/>else SignalResponse<br/>current_green_lane<br/>state, remaining<br/>green_time, last_reason"]
+        DecisionAPI["GET /decision<br/>decision.py:11<br/>require_admin<br/>last_decision<br/>or message"]
+        HistoryAPI["GET /history/signals<br/>history.py:73<br/>limit 1-200"]
+        Drawing["SystemDrawer<br/>system/drawing.py:227<br/>_draw_signal()<br/>Green Lane, State<br/>Remaining, Green Time<br/>Reason at x=700"]
+    end
+
+    PDFSignal -.-> CodeConfig & DecisionConfig
+    CodeConfig --> Service --> Model
+    DecisionConfig --> DEService --> Process --> DEModel
+    Service --> Update --> SysUpdate --> SysDecision --> Apply
+    Process -.-> SysDecision
+    SysDecision --> SysPersist --> Persist --> Table
+    Table --> HistoryAPI
+    Model --> SignalAPI
+    DEModel --> DecisionAPI & Apply & Persist
+    Model --> Drawing
+    PDFSpeed -.-> CodeSpeed
+    SpeedControl -.-> SysDecision
+    Example -.-> Process

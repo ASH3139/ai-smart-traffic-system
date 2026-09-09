@@ -1,0 +1,77 @@
+COPY-PASTE PROMPT FOR AI PPT MAKER (upload PROJECT_REFERENCE_GUIDE.md with it)
+============================================================================
+Copy everything below the line into your AI PPT maker. Upload
+PROJECT_REFERENCE_GUIDE.md in the same chat first.
+
+--------------------------------- COPY BELOW ---------------------------------
+
+I uploaded PROJECT_REFERENCE_GUIDE.md. Use it as the ONLY source of truth.
+Do not invent new modules. Do not add file names, folder paths, or code.
+Make exactly 20 slides. Simple, not texty. Presentation to a mentor.
+
+GLOBAL STYLE:
+- Max 3-5 short bullets per slide, max 6-7 words per bullet.
+- 1 diagram OR 1 small table OR 1 big number per slide for slides 4-17.
+- Recreate diagrams cleanly from the guide (Figures 1-10). No blurry images.
+- Large readable fonts. Title on every slide.
+- Tone: confident student explaining what I did, not a textbook.
+
+SLIDE 1 - Title:
+PS Title: [PASTE YOUR APPROVED TITLE]
+Name: [YOUR NAME], ID No: [ID], Department: EEE
+Company Guide Name & Designation: [NAME, DESIGNATION, COMPANY]
+University Guide Name: [NAME]
+Add university logo left, company logo right. No other text.
+
+SLIDE 2 - Abstract / Description (points only, from MD Sections 1+2):
+5 bullets:
+- Camera watches junction continuously
+- Finds vehicles, tracks IDs, assigns lanes
+- Estimates speed, scores congestion per lane
+- Auto-selects green lane + time (15/25/40s)
+- Saves history, shows live APIs + video
+
+SLIDE 3 - Fortnight work table (3 columns):
+Columns: Fortnight duration | Work done | Remarks (% completed)
+Rows (edit % honestly):
+Fortnight 1 | Database, backend setup, API rules | 100% base ready
+Fortnight 2 | Camera, 3 lanes, login, junction | 100% single camera working
+Fortnight 3 | Video ingestion, simulator, storage | 100% sample video tested
+Fortnight 4 | YOLOv8 detection + evaluation | 100% 24 vehicles, 0.80 confidence
+Fortnight 5 | Tracking + speed estimation | 90% IDs stable, speed indicative
+Fortnight 6 | Queue + congestion + history APIs | 100% 7 scores + history working
+Fortnight 7 | Adaptive signal + speed control | 90% rule decision working
+
+SLIDES 4-17 - Main work (use MD sections given, one topic + one visual each):
+Slide 4 - System overview (MD Section 4, Figure 2): video -> AI -> signal flow diagram.
+Slide 5 - Architecture (MD Section 4+5.1, Figure 1): API layer, orchestrator loop, data layer diagram.
+Slide 6 - Database (MD Section 5.2+12, Figure 3): 6 boxes - cameras, users, traffic, lane, signal, events. Note: saved every 10 sec.
+Slide 7 - Camera + Lane (MD Section 6.1+6.2, Figure 4): lane sketch 0-640 / 640-1280 / 1280-1920. Example: center 750 -> Lane 2.
+Slide 8 - Auth + Junction (MD Section 6.3+6.4, Figure 5): register -> login -> token -> access flow. 1 line: single camera now, multi-camera next.
+Slide 9 - Video ingestion + simulator (MD Section 7, Figure 6): open once -> read -> resize 1280x720 -> pack frame. Note: same code for recorded + live.
+Slide 10 - Detection (MD Section 8, Figure 7): YOLOv8 small, 4 types, thresholds 0.25/0.35. Big number: 24 vehicles, 0.80 confidence.
+Slide 11 - Tracking + trajectory (MD Section 9.1+9.2): ByteTrack, same ID across frames. Example: ID 7 stays Lane 2 then crosses line.
+Slide 12 - Speed (MD Section 9.3): Show ONLY formula kmh = pixel_distance x 5.4. Example: 3 pixels -> 16.1 km/h, avg 12.8.
+Slide 13 - Analytics 7 scores (MD Section 10.2, Figure 9): small table count, avg speed, density, queue, waiting, load, flow.
+Slide 14 - Per-lane + dashboard (MD Section 10.2+10.3): dashboard mock Current 24, Density 0.48, Queue 10, Load 42. Per-lane 1,3,1.
+Slide 15 - Adaptive signal (MD Section 11, Figure 10): rule box queue 0-2->15s Low, 3-5->25s Medium, >5->40s High. Example queues 1,4,6 -> pick 6 -> 40s.
+Slide 16 - APIs + demo (MD Section 13): list only /analytics, /lanes, /signal, /video, /history. Leave space for 1 demo screenshot.
+Slide 17 - Case studies / observations (MD Section 14+15): 3 cases Light queue1->15s, Medium queue4->25s, Heavy queue10->40s. 1 observation line each.
+
+SLIDE 18 - Conclusion (4 bullets):
+- 7 works completed from base to adaptive signal
+- 24 vehicles detected, congestion scored, signal auto-selected
+- History + APIs ready for dashboard
+- Next: calibration, full signal phases
+
+SLIDE 19 - References (5 lines max):
+Concept note (13 stages idea), YOLOv8, ByteTrack, OpenCV optical flow, FastAPI/PostgreSQL docs. Number [1]-[5].
+
+SLIDE 20 - Learning outcome (80-90 words, personal to mentor, not only technical):
+Write 80-90 words covering: real problem to modules, Python/FastAPI/PostgreSQL skills, testing with simulator, debugging, documentation, teamwork, time planning, mentor feedback. Example style:
+"In practice school I learned to convert a real junction problem into working modules, from database and APIs to detection, tracking and signal decisions. I improved in Python, FastAPI, PostgreSQL and evaluating AI output with honest numbers. I learned to test with simulator video, debug lane and speed issues, document clearly and present to mentors. I also learned teamwork, time planning across fortnights, and taking feedback to fix limitations systematically."
+Count words and keep 80-90.
+
+CHECK BEFORE FINISHING: exactly 20 slides, order 1-20 kept, slides 4-17 visual + minimal text, no file/folder/code text, slide 20 is 80-90 words.
+
+------------------------------- COPY END ---------------------------------

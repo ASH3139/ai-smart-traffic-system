@@ -23,3 +23,5 @@ class FrameResult:
     behavior_events: dict
 
     signal: Any
+
+    incidents: list

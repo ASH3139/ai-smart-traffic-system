@@ -1,0 +1,54 @@
+%% Work 6 - Analytics, Queue, Congestion, History
+graph TB
+    subgraph Config["Config - PDF Stage 7 PCU"]
+        PDFPCU["PDF PCU Weights<br/>Two-wheeler 0.50<br/>Three-wheeler 0.75<br/>Four-wheeler 1.00<br/>Heavy 2.50"]
+        YAMLPCU["analytics.yaml:13<br/>motorcycle 0.5<br/>bicycle 0.5<br/>car 1.0<br/>auto 1.2<br/>bus 3.0<br/>truck 3.0<br/>Note mismatch<br/>vs PDF & detection 4 classes"]
+        Thresholds["Thresholds<br/>density max_vehicles 50<br/>queue speed 5.0<br/>waiting speed 2.0<br/>lane density_scale 20.0"]
+    end
+
+    subgraph AnalyticsPipeline["Analytics Pipeline"]
+        Service["AnalyticsService<br/>analytics/service.py:5<br/>PIPELINE 7 calculators"]
+        Pipeline["pipeline.py:8<br/>1 VehicleCounter<br/>2 AverageSpeed<br/>3 TrafficDensity<br/>4 QueueLength<br/>5 WaitingTime<br/>6 PCU<br/>7 TrafficFlow"]
+        Loop["Loop<br/>service.py:14<br/>process(frame,tracks,speeds)<br/>statistics=TrafficStatistics()<br/>for calc in PIPELINE:<br/>calc.calculate(frame,tracks,speeds,statistics)"]
+    end
+
+    subgraph Calculators["7 Calculators"]
+        Counter["VehicleCounter<br/>vehicle_counter.py:15<br/>current=len(tracks)<br/>total=len(unique_tracks set)<br/>⚠ never evicted"]
+        AvgSpeed["AverageSpeed<br/>average_speed.py:14<br/>mean(speed_kmh) else 0"]
+        Density["TrafficDensity<br/>traffic_density.py:26<br/>density=min(count/50,1.0)"]
+        Queue["QueueLength<br/>queue_length.py:31<br/>speed <=5.0 count<br/>queue_length=10 example"]
+        Waiting["WaitingTime<br/>waiting_time.py:42<br/>speed <=2.0<br/>elapsed = timestamp diff"]
+        PCU["PCUCalculator<br/>pcu.py:36<br/>sum(weights)<br/>example 42.0 for 24 vehicles"]
+        Flow["TrafficFlow<br/>traffic_flow.py:38<br/>unique last 60s<br/>flow=count*60<br/>example 1440"]
+    end
+
+    subgraph LaneAnalytics["Lane Analytics"]
+        LAConfig["LaneAnalyticsConfig<br/>lane_analytics/config.py:10<br/>density_scale 20.0"]
+        LAService["LaneAnalyticsService<br/>lane_analytics/service.py:17<br/>process(tracks,speeds)<br/>group by lane_id<br/>vehicle_count=len<br/>avg_speed mean<br/>density=count/20.0<br/>queue speed<2.0<br/>flow=count*60"]
+        Example["Example<br/>lane1:1 lane2:3 lane3:1<br/>only 5 of 24 assigned<br/>due to 1920 vs 1280 bug"]
+    end
+
+    subgraph Models["Models"]
+        TS["TrafficStatistics<br/>analytics/models.py:8<br/>current, total<br/>avg_speed, density<br/>queue, waiting<br/>avg_wait, max_wait<br/>pcu, flow<br/>vehicles_passed_last_min"]
+        LS["LaneStatistics<br/>lane_analytics/models.py:6<br/>lane_id<br/>vehicle_count<br/>average_speed<br/>density<br/>queue_length<br/>traffic_flow"]
+    end
+
+    subgraph APIsStorage["APIs & Storage"]
+        AnalyticsAPI["GET /analytics<br/>analytics.py:12<br/>503 if no result<br/>else AnalyticsResponse 11 fields"]
+        StatsAPI["GET /statistics<br/>statistics.py:12<br/>⚠ 500 bug<br/>returns message vs model"]
+        LanesAPI["GET /lanes<br/>lanes.py:12<br/>200 [] if no data"]
+        HistoryAPI["GET /history/*<br/>history.py:21<br/>/traffic /lanes /signals<br/>Query limit 1-200<br/>default 50"]
+        Persist["Persistence<br/>persistence/service.py<br/>save_traffic:150<br/>save_lane:172<br/>tables traffic_analytics.py:9<br/>lane_analytics.py:9<br/>throttled 10s system:257"]
+    end
+
+    Config --> Service --> Pipeline --> Loop
+    Loop --> Counter & AvgSpeed & Density & Queue & Waiting & PCU & Flow
+    Counter & AvgSpeed & Density & Queue & Waiting & PCU & Flow --> TS
+    LAService --> LS
+    TS --> AnalyticsAPI & StatsAPI & Persist
+    LS --> LanesAPI & LAService
+    LS --> Persist
+    Persist --> HistoryAPI
+    Thresholds -.-> Density & Queue & Waiting & LAService
+    PDFPCU -.-> YAMLPCU -.-> PCU
+    Example -.-> LAService

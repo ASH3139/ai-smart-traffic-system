@@ -1,0 +1,51 @@
+%% End-to-End Data Flow - 7 Works
+graph LR
+    subgraph Input["Input - Work 3"]
+        Cam["Camera<br/>cameras table<br/>is_active=true<br/>or YAML video.yaml"]
+        Video["VideoService<br/>FrameReader<br/>1280x720 loop"]
+        Frame["Frame<br/>frame_id, image<br/>timestamp"]
+    end
+
+    subgraph AI["AI Pipeline - Works 4-5"]
+        Track["TrackingService:22<br/>YOLOv8s track<br/>persist byteTrack<br/>conf 0.35"]
+        Lane["LaneService:36<br/>assign_lane<br/>center_x -> lane 1/2/3"]
+        Flow["OpticalFlow:18<br/>Farneback<br/>flow HxWx2"]
+        Speed["SpeedService:14<br/>VehicleSpeed<br/>px*5.4 km/h"]
+    end
+
+    subgraph Analytics["Analytics - Work 6"]
+        AnalyticsSvc["AnalyticsService:12<br/>7 calculators<br/>TrafficStatistics"]
+        LaneAnalyticsSvc["LaneAnalyticsService:17<br/>LaneStatistics<br/>per lane"]
+        Behavior["BehaviorService:17<br/>stop/counting events"]
+    end
+
+    subgraph Decision["Decision - Work 7"]
+        SignalUpdate["TrafficSignal:31<br/>update()<br/>tick 1s"]
+        Need{"needs_decision?"}
+        DecisionEng["DecisionEngine:15<br/>max queue<br/>15/25/40s"]
+        SignalApply["TrafficSignal:59<br/>apply_decision()<br/>GREEN remaining"]
+    end
+
+    subgraph StorageAPI["Storage & APIs - Works 1-7"]
+        Persist["Persistence:10s<br/>save_traffic<br/>save_lane<br/>save_signal"]
+        DB["Postgres<br/>traffic_system_db<br/>6 tables"]
+        REST["REST APIs - Work 1<br/>/health /analytics<br/>/signal /cameras<br/>/history/* /video"]
+        Drawer["SystemDrawer:9<br/>overlay boxes<br/>dashboards<br/>signal info"]
+    end
+
+    Cam --> Video --> Frame --> Track --> Lane --> Flow --> Speed --> AnalyticsSvc
+    Track --> LaneAnalyticsSvc
+    Speed --> AnalyticsSvc
+    Speed --> LaneAnalyticsSvc
+    Track --> Behavior
+    AnalyticsSvc --> SignalUpdate
+    LaneAnalyticsSvc --> SignalUpdate
+    SignalUpdate --> Need
+    Need -- "True when<br/>remaining=0" --> DecisionEng --> SignalApply --> Persist
+    Need -- "False" --> Persist
+    AnalyticsSvc --> Persist
+    LaneAnalyticsSvc --> Persist
+    Persist --> DB --> REST
+    Track & Speed & AnalyticsSvc & LaneAnalyticsSvc & SignalApply --> Drawer
+    Drawer --> REST
+    Frame --> Drawer

@@ -1,0 +1,32 @@
+%% Work 2 - Camera, Lane, Junction, Auth
+graph LR
+    subgraph Auth["Authentication"]
+        Register["POST /auth/register<br/>User table<br/>user.py:9<br/>hash_password<br/>security.py:20"]
+        Login["POST /auth/login<br/>verify_password<br/>create_access_token<br/>security.py:40"]
+        JWT["JWT HS256 60min<br/>decode_access_token<br/>security.py:66"]
+        DepAuth["dependencies/auth.py<br/>get_current_user<br/>require_admin"]
+    end
+
+    subgraph Camera["Camera Management"]
+        CamTable["Camera table<br/>camera.py:9<br/>id,name,source<br/>source_type,location<br/>is_active,created_at"]
+        CamService["CameraService<br/>camera/service.py:5<br/>create_camera()"]
+        PersistenceCam["PersistenceService<br/>persistence/service.py<br/>get_cameras:78<br/>get_active_camera:24<br/>get_cameras_by_junction:90"]
+        ApiCameras["GET /cameras<br/>cameras.py:16<br/>Auth required"]
+        Junction["Junction concept<br/>PDF junction_id<br/>b4f4c72 migration<br/>drop junctions"]
+    end
+
+    subgraph Lane["Lane Configuration"]
+        LaneConfig["LaneConfig<br/>lane/config.py:7<br/>frame_width=1920<br/>lane_count=3<br/>lane_width=640"]
+        LaneModel["Lane model<br/>lane/models.py:6<br/>lane_id, name<br/>left_boundary<br/>right_boundary"]
+        LaneService["LaneService<br/>lane/service.py<br/>creates 3 lanes<br/>0-640 | 640-1280 | 1280-1920<br/>assign_lane:36<br/>center_x=(x1+x2)//2"]
+        LaneExample["Example<br/>Track x1=700 x2=800<br/>center=750 → Lane 2"]
+    end
+
+    Register --> CamTable
+    Login --> JWT --> DepAuth
+    DepAuth --> ApiCameras
+    CamService --> CamTable
+    CamTable --> PersistenceCam --> ApiCameras
+    Junction -.-> PersistenceCam
+    LaneConfig --> LaneService --> LaneModel
+    LaneService --> LaneExample

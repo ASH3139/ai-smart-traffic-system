@@ -57,3 +57,16 @@ def video(
         generate_frames(system),
         media_type="multipart/x-mixed-replace; boundary=frame",
     )
+
+
+@router.get(
+    "/video-preview",
+    summary="Preview processed traffic video",
+)
+def video_preview(
+    system: TrafficSystemService = Depends(get_system),
+):
+    return StreamingResponse(
+        generate_frames(system),
+        media_type="multipart/x-mixed-replace; boundary=frame",
+    )

@@ -1,0 +1,33 @@
+%% Work 4 - YOLOv8 Detection
+graph TB
+    subgraph Config["Config - PDF Stage 2"]
+        PDF["PDF Spec<br/>YOLOv8 nano<br/>conf 0.45<br/>classes: bike,car<br/>bus,truck,pedestrian,cattle"]
+        YAML["detection.yaml:2<br/>model: yolov8s.pt<br/>conf: 0.25<br/>iou: 0.45<br/>device: cpu<br/>imgsz: 1280<br/>vehicle_classes:<br/>car,motorcycle,bus,truck"]
+        Note["Note: s vs nano mismatch<br/>yolov8s.pt 21.5MB active<br/>yolov8n.pt 6.2MB present<br/>but unused"]
+    end
+
+    subgraph Registry["Model Loading"]
+        Reg["ModelRegistry<br/>shared/model_registry.py:12<br/>get_yolo(model_path)<br/>singleton _models dict<br/>YOLO(model_path)"]
+        DetConfig["DetectionConfig<br/>detection/config.py:7<br/>reads yaml<br/>+ model path"]
+    end
+
+    subgraph DetectionFlow["Detection Flow"]
+        Service["DetectionService<br/>detection/service.py:7<br/>__init__ loads model<br/>+ DetectionInference"]
+        Inference["DetectionInference<br/>detection/inference.py:10<br/>predict(image)<br/>model(image,conf,iou,imgsz)<br/>loop box.cls/conf/xyxy<br/>int(xyxy)<br/>filter vehicle_classes"]
+        Output["Detection model<br/>detection/models.py:6<br/>class_id, class_name<br/>confidence, x1,y1,x2,y2"]
+        TrackingDirect["Actual Pipeline<br/>system/service.py:168<br/>TrackingService.track()<br/>does YOLO+ByteTrack directly<br/>DetectionService NOT called<br/>in hot loop"]
+    end
+
+    subgraph Integration["Integration & Storage"]
+        SystemProc["system/service.py:156<br/>process_frame()<br/>tracks=tracker.track(image)"]
+        Persist["PersistenceService<br/>persistence/service.py:194<br/>save_vehicle_event<br/>track_id, vehicle_type<br/>lane_id, speed, event_type"]
+        Table["vehicle_events<br/>tables/vehicle_event.py:9<br/>id, timestamp<br/>track_id, vehicle_type<br/>lane_id, speed, event_type"]
+        Eval["Evaluation<br/>1920x1080 frame<br/>30 boxes @ conf 0.25<br/>filtered to 24 vehicles<br/>conf 0.80<br/>1.35s/frame @ 640<br/>~0.7 FPS on CPU"]
+    end
+
+    PDF -.-> YAML
+    YAML --> DetConfig --> Reg --> Service --> Inference --> Output
+    Note -.-> Reg
+    Output -.-> SystemProc
+    TrackingDirect --> SystemProc --> Persist --> Table
+    Eval -.-> Inference

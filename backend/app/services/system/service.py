@@ -13,6 +13,7 @@ from backend.app.services.roi.service import ROIService
 from backend.app.services.stop_line.service import StopLineService
 from backend.app.services.counting_line.service import CountingLineService
 from backend.app.services.behavior.service import BehaviorService
+from backend.app.services.incident_detection.service import IncidentDetectionService
 
 from backend.app.services.traffic_signal.service import TrafficSignalService
 from backend.app.services.decision_engine.service import DecisionEngineService
@@ -74,6 +75,8 @@ class TrafficSystemService:
             stop_line_y=self.stop_line.stop_line.start[1],
             counting_line_y=self.counting_line.counting_line.start[1],
         )
+
+        self.incident_detection = IncidentDetectionService()
 
         # -----------------------------
         # AI
@@ -208,6 +211,16 @@ class TrafficSystemService:
             behavior_events[track.track_id] = self.behavior.update(track)
 
         # -----------------------------
+        # Incident Detection
+        # -----------------------------
+
+        incidents = self.incident_detection.process(
+            tracks=tracks,
+            speeds=speeds,
+            behavior_events=behavior_events,
+        )
+
+        # -----------------------------
         # Decision Engine
         # -----------------------------
 
@@ -241,6 +254,7 @@ class TrafficSystemService:
             lane_statistics=lane_statistics,
             behavior_events=behavior_events,
             signal=self.signal.get_state(),
+            incidents=incidents,
         )
 
         image = self.drawer.draw(

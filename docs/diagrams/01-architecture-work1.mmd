@@ -1,0 +1,47 @@
+%% Work 1 - Backend Architecture, DB, API Standards
+graph TB
+    subgraph Client["Client Layer"]
+        Swagger["Swagger UI<br/>/docs"]
+        Dashboard["Dashboard / App"]
+    end
+    subgraph API["FastAPI - backend/app/main.py:19"]
+        Main["FastAPI app<br/>title=PROJECT_NAME<br/>version=VERSION"]
+        Routers["11 Routers<br/>main.py:24-36"]
+        Health["/health<br/>health.py:8"]
+        Analytics["/analytics<br/>analytics.py:12"]
+        Signal["/signal<br/>signal.py:12"]
+        Video["/video<br/>video.py:45"]
+        Cameras["/cameras<br/>cameras.py:16"]
+        History["/history/*<br/>history.py:21"]
+        Auth["/auth<br/>auth.py"]
+    end
+    subgraph Core["Core & Config"]
+        Settings["settings.py:7<br/>BaseSettings<br/>.env:16 DATABASE_URL"]
+        Security["security.py:40<br/>JWT HS256<br/>60min"]
+        Logging["logging.py:4<br/>traffic-system"]
+        ConfigMgr["shared/config_manager.py:13<br/>YAML cache"]
+        ModelReg["shared/model_registry.py:12<br/>YOLO singleton"]
+    end
+    subgraph DB["Database Layer"]
+        Engine["connection.py<br/>engine=create_engine"]
+        Session["session.py<br/>SessionLocal"]
+        SessMgr["session_manager.py:9<br/>get_db_session()<br/>commit/rollback"]
+        Tables["Tables<br/>camera.py:9<br/>traffic_analytics.py:9<br/>lane_analytics.py:9<br/>signal_decision.py:9<br/>vehicle_event.py:9<br/>user.py:9"]
+        Migrations["migrations/<br/>87c42...<br/>9fe753...<br/>b4f4c72...<br/>alembic.ini:89"]
+    end
+    subgraph System["Orchestrator<br/>services/system/service.py:34"]
+        Sys["TrafficSystemService<br/>__init__:34<br/>start:102<br/>process_frame:156<br/>_processing_loop:281"]
+    end
+    Swagger --> Main
+    Dashboard --> Main
+    Main --> Routers
+    Routers --> Health & Analytics & Signal & Video & Cameras & History & Auth
+    Routers --> SessMgr
+    Routers --> System
+    Settings --> Main
+    Settings --> Engine
+    Security --> Auth
+    System --> SessMgr
+    SessMgr --> Tables
+    Engine --> Tables
+    Migrations --> Tables

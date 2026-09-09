@@ -1,0 +1,127 @@
+COPY-PASTE PROMPT FOR AI REPORT MAKER (upload PROJECT_REFERENCE_GUIDE.md with it)
+============================================================================
+Copy everything below the line into your AI report maker. Upload
+PROJECT_REFERENCE_GUIDE.md in the same chat first.
+
+--------------------------------- COPY BELOW ---------------------------------
+
+I uploaded PROJECT_REFERENCE_GUIDE.md. Use it as the ONLY source of truth.
+Do not invent new modules. Do not add file names, folder paths, or code.
+
+TASK: CREATE a full semester interim report as an editable Word document.
+Minimum 30 pages, A4, simple clear English any evaluator can understand.
+
+STEP 1 - CREATE the document structure in this exact order. CREATE each item
+as a real section, not just a mention:
+1. CREATE Cover Page
+2. CREATE Bonafide Certificate page
+3. CREATE Abstract (250 words, 1 page)
+4. GENERATE Table of Contents (auto headings, updateable)
+5. CREATE List of Tables page
+6. CREATE List of Figures page
+7. CREATE List of Symbols, Abbreviations and Nomenclature table
+8. CREATE Chapter 1 (3-4 pages)
+9. CREATE Chapter 2 (5-6 pages)
+10. CREATE Chapter 3 (5-6 pages)
+11. CREATE Chapter 4 (6-7 pages)
+12. CREATE Chapter 5 (5-6 pages)
+13. CREATE Results / Case studies / Experimental results (4-5 pages)
+14. CREATE References
+
+STEP 2 - APPLY this formatting. FORMAT the whole document accordingly:
+(a) SET paper A4. ENSURE total is 30+ pages by expanding explanations
+(see Step 4). INSERT page numbers starting AFTER index pages - no number on
+cover, certificate, abstract, TOC, lists, symbols. START numbering at Chapter 1
+as page 1. PLACE numbers bottom-middle.
+(b) SET margins Left 1.2 inch, Top/Right/Bottom 1.0 inch. ADD thin single-line
+page border (Box). SET 1.5 line spacing, 6pt after paragraphs.
+(c) BUILD cover with university logo top-left and company logo top-right,
+same height, locked aspect ratio. CENTER below: [MY TITLE], B.Tech + EEE,
+[MY NAME + ID], [COMPANY GUIDE NAME + DESIGNATION + COMPANY],
+department + university address, academic year, company name + address.
+INSERT [Logo Here] boxes if files missing. Ask me for these details if blank:
+MY TITLE=, MY NAME=, MY ID=, COMPANY GUIDE=, UNIVERSITY GUIDE=.
+(d) APPLY styles: Main Headings Times New Roman 14 Bold Centered.
+Sub Headings Times New Roman 13 Bold Left. Body Times New Roman 12 Regular
+Justified, unbold, non-italic. Table titles Times New Roman 11 Italic unbold
+ABOVE each table. Figure captions Times New Roman 11 Italic unbold BELOW
+each figure.
+(e) RETYPE all equations neatly (do not paste blurry images):
+CREATE equation lines for pixel_distance = sqrt(dx*dx + dy*dy),
+kmh = pixel_distance x 5.4, density = count / 50, lane density = count / 20.
+REDRAW all flowcharts/boxes cleanly. LABEL overlays as Redrawn illustration.
+(f) KEEP chapter contents as my 7 works only, in the order in Step 4.
+
+STEP 3 - CREATE these front and back pages with real content:
+- CREATE Abstract: WRITE 250 words covering what the system does (camera
+watches junction) + how (YOLOv8 detect, ByteTrack track, lane assign, optical
+flow speed, 7 congestion scores, adaptive 15/25/40s signal) + tech (FastAPI,
+PostgreSQL, OpenCV) + result (24 vehicles, 0.80 confidence, density 0.48,
+queue 10, load 42).
+- GENERATE TOC from headings so page numbers update.
+- CREATE List of Tables page: LIST every table you created with title + page no.
+- CREATE List of Figures page: LIST every figure you created with caption + page no.
+- CREATE Symbols table with columns Abbreviation | Meaning + unit. INCLUDE:
+PCU/load score, YOLOv8, ByteTrack, Optical Flow, ROI, Motion JPEG, JWT token,
+Density (0-1), Queue, Congestion score, Migration, Orchestrator, Frame, Track,
+Trajectory. ADD units km/h, seconds.
+- CREATE References [1]-[7]: concept note (13 stages), YOLOv8, ByteTrack,
+OpenCV flow, FastAPI, PostgreSQL/SQLAlchemy. CITE them in text.
+
+STEP 4 - CREATE chapters. For each chapter CREATE the tables and figures
+listed, plus 1 paragraph BEFORE and 1 paragraph AFTER each table/figure
+explaining what it shows and what it means (this is how you reach 30 pages):
+
+CREATE Chapter 1 - Introduction (3-4 pages):
+1.1 Overview, 1.2 Problem, 1.3 Objectives (CREATE bullet list of 7 works),
+1.4 Scope (only 7 works), 1.5 Organization.
+
+CREATE Chapter 2 - Technologies and System Architecture (5-6 pages):
+CREATE Table 2.1 Technologies (1 line why each chosen).
+CREATE Figure 2.1 Architecture diagram (client -> API -> orchestrator -> data).
+CREATE Figure 2.2 End-to-End Flow (8-10 step frame order).
+
+CREATE Chapter 3 - Database, Backend, Camera, Lane, Authentication (5-6 pages):
+CREATE Table 3.1 Database 6 tables (1 paragraph per table).
+DESCRIBE migrations in 4-5 lines.
+DESCRIBE API standards (routers, login, limit 1-200, 503 when starting).
+CREATE Table 3.2 Camera fields + registration concept.
+CREATE Figure 4.1 Lane diagram (0-640 / 640-1280 / 1280-1920) + top-view sketch.
+SHOW example center=(left+right)/2, 700-800->750->Lane2.
+CREATE Figure 4.2 Login flow (register->hash->login->token->verify).
+DESCRIBE junction in 1 paragraph (single camera now, grouping next).
+
+CREATE Chapter 4 - Video Ingestion, Detection, Tracking, Speed (6-7 pages):
+CREATE Figure 5.1 Ingestion Pipeline (open once -> read -> resize 1280x720 -> pack frame).
+DESCRIBE simulator (recorded video, live needs only source change) + status/video APIs.
+CREATE Figure 5.2 Detection Flow + box illustration. STATE 24 vehicles 0.80.
+CREATE trajectory example (ID 7 across 3 frames).
+CREATE speed derivation + ONLY formula kmh = pixel_distance x 5.4.
+SHOW example 3 pixels->16.1 km/h avg 12.8 + CREATE Figure 5.3 Tracking+Speed Flow + tracked frame.
+
+CREATE Chapter 5 - Analytics and Adaptive Signal (5-6 pages):
+CREATE Table 5.1 Seven calculators (half page each: what + logic + example).
+CREATE Figure 6.1 Analytics Pipeline + dashboard mock (Current 24, Density 0.48, Queue 10, Load 42).
+DESCRIBE per-lane + history (save every 10 sec, read newest-first with limit).
+DESCRIBE signal states + timer.
+CREATE decision rule box 0-2->15s Low, 3-5->25s Medium, >5->40s High + CREATE Figure 6.2.
+SHOW example queues 1,4,6 -> pick 6 -> 40s. DESCRIBE speed control as foundation.
+
+CREATE Results / Case studies / Experimental results (4-5 pages):
+DESCRIBE setup (sample video full HD 30fps 625 frames, CPU).
+WRITE numbered frame-105 walkthrough (detect->lane->speed->analytics->decision->save->display).
+CREATE Results Table and EXPLAIN each row (24, 0.80, 12.8, 0.48, 10, 42, 1/3/1, 15/25/40s, 0.7 fps).
+CREATE 3 case boxes Light queue1->15s / Medium queue4->25s / Heavy queue10->40s with 1 observation each.
+INSERT 3 figures (tracked frame, dashboard, signal overlay). ADD discussion paragraph.
+
+STEP 5 - VERIFY before giving the file:
+- CHECK 30+ pages, correct order, TOC/lists/symbols present.
+- CHECK every table has title above, every figure has caption below and is mentioned in text.
+- CHECK no file/folder/code text, no blurry figures.
+- RETURN the .docx file + list what you created (tables count, figures count, pages).
+
+My details for cover (use these, ask if missing):
+TITLE=[PASTE APPROVED TITLE], NAME=[YOUR NAME], ID=[ID], DEPT=EEE,
+CG=[NAME + DESIGNATION + COMPANY], UG=[FACULTY NAME].
+
+------------------------------- COPY END ---------------------------------
